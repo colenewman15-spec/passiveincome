@@ -9,12 +9,11 @@ Set-Location $root
 
 # Rotate niche/topic from config if not provided
 $config = Get-Content (Join-Path $root "config.json") | ConvertFrom-Json
+$week = [math]::Floor((Get-Date).DayOfYear / 7)
 if (-not $Niche) {
-  $week = [math]::Floor((Get-Date).DayOfYear / 7)
   $Niche = $config.niches[$week % $config.niches.Count]
 }
 if (-not $ArticleTopic) {
-  $week = [math]::Floor((Get-Date).DayOfYear / 7)
   $ArticleTopic = $config.article_topics[$week % $config.article_topics.Count]
 }
 
@@ -44,12 +43,19 @@ try {
   node (Join-Path $root "factory\generate_article.mjs") $ArticleTopic
   if ($LASTEXITCODE -ne 0) { Write-Host "Article generation failed (non-fatal)" }
 
-  # 4. Build site (render markdown guides to HTML)
+  # 4. Generate a comparison page (rotates weekly) and rebuild StackCompare
+  Write-Host "`n--- Generating comparison page ---"
+  $compareCategory = $config.compare_categories[$week % $config.compare_categories.Count]
+  node (Join-Path $root "factory\generate_comparison.mjs") $compareCategory
+  if ($LASTEXITCODE -ne 0) { Write-Host "Comparison generation failed (non-fatal)" }
+  node (Join-Path $root "factory\build_compare.mjs")
+
+  # 5. Build site (render markdown guides to HTML)
   Write-Host "`n--- Building site ---"
   node (Join-Path $root "factory\build_site.mjs")
   if ($LASTEXITCODE -ne 0) { Write-Host "Site build failed (non-fatal)" }
 
-  # 5. Package
+  # 6. Package
   Write-Host "`n--- Packaging products ---"
   python (Join-Path $root "factory\package.py")
   if ($LASTEXITCODE -ne 0) { throw "Packaging failed" }

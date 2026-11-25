@@ -13,5 +13,22 @@
     "home office lighting guide",
     "cable management for desk"
   ],
+  "compare_categories": [
+    "CRM software",
+    "project management software",
+    "email marketing software",
+    "accounting software",
+    "HR software",
+    "customer support software",
+    "password managers",
+    "VPN services",
+    "website builders",
+    "e-signature software",
+    "cloud storage services",
+    "video conferencing software",
+    "help desk software",
+    "marketing automation software",
+    "payroll software"
+  ],
   "default_price_usd": 19
 }
