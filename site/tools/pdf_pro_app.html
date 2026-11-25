@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Pro - Free Browser PDF Tools (Merge, Split, Rotate, Compress)</title>
+  <meta name="description" content="Merge, split, rotate and compress PDF files entirely in your browser. No uploads, no account, mobile-friendly.">
+  <style>
+    :root { --primary:#06B6D4; --primary-dark:#0EA5E9; --bg:#f8fafc; --card:#ffffff; --text:#1e293b; --muted:#64748b; --border:#cbd5e1; --success:#10b981; --danger:#ef4444; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+    .header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 2rem 1rem; text-align: center; color: #fff; border-radius: 0 0 2rem 2rem; }
+    .header h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: .5rem; }
+    .header p { opacity: .95; font-size: 1.05rem; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+    .upload-area { border: 3px dashed var(--border); border-radius: 1rem; padding: 3rem 1rem; text-align: center; background: #fff; cursor: pointer; transition: all .2s; }
+    .upload-area.dragover { border-color: var(--primary); background: #f0fdfc; }
+    .upload-area p { margin: .5rem 0; }
+    .upload-area .big { font-size: 1.4rem; font-weight: 600; }
+    .btn { background: var(--primary); color: #fff; padding: .7rem 1.4rem; border: none; border-radius: .5rem; cursor: pointer; font-size: 1rem; margin: .25rem; transition: background .2s; }
+    .btn:hover { background: var(--primary-dark); }
+    .btn.secondary { background: #e2e8f0; color: var(--text); }
+    .btn.secondary:hover { background: #cbd5e1; }
+    .btn.danger { background: var(--danger); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .actions { display: none; gap: .5rem; flex-wrap: wrap; margin-top: 1.5rem; justify-content: center; }
+    .file-list { margin-top: 1.5rem; }
+    .file-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border: 1px solid var(--border); border-radius: .5rem; margin-bottom: .5rem; background: #fff; flex-wrap: wrap; }
+    .file-item .name { font-weight: 600; word-break: break-all; }
+    .file-item .meta { color: var(--muted); font-size: .9rem; }
+    .status { margin-top: 1rem; padding: 1rem; border-radius: .5rem; display: none; }
+    .status.show { display: block; }
+    .status.info { background: #eff6ff; color: #1e40af; }
+    .status.ok { background: #ecfdf5; color: #065f46; }
+    .status.err { background: #fef2f2; color: #991b1b; }
+    .progress { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: .5rem; display: none; }
+    .progress.show { display: block; }
+    .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: width .2s; }
+    .options { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: center; margin: 1rem 0; }
+    .options label { display: flex; align-items: center; gap: .4rem; font-size: .95rem; }
+    footer { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: .85rem; border-top: 1px solid #e2e8f0; margin-top: 2rem; }
+    .badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: .2rem .6rem; border-radius: 999px; font-size: .8rem; margin-left: .5rem; }
+    @media (max-width: 600px) { .upload-area { padding: 2rem 1rem; } .file-item { flex-direction: column; align-items: flex-start; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>PDF Pro <span class="badge">Free</span></h1>
+    <p>Merge, Split, Rotate &amp; Compress PDFs &mdash; 100% in your browser, no uploads</p>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="upload-area" id="dropZone">
+        <p class="big">Drag &amp; Drop PDFs here</p>
+        <p style="color:var(--muted)">or click to browse &bull; multiple files supported &bull; max 25 MB each</p>
+        <input type="file" id="fileInput" accept="application/pdf" multiple style="display:none">
+      </div>
+
+      <div class="actions" id="actions">
+        <button class="btn" id="btnMerge" onclick="mergePDFs()">Merge All PDFs</button>
+        <button class="btn secondary" id="btnSplit" onclick="splitPDFs()">Split into Pages (ZIP)</button>
+        <button class="btn secondary" id="btnRotateL" onclick="rotateAll('left')">Rotate Left 90&deg;</button>
+        <button class="btn secondary" id="btnRotateR" onclick="rotateAll('right')">Rotate Right 90&deg;</button>
+        <button class="btn secondary" id="btnCompress" onclick="compressPDFs()">Compress / Optimize</button>
+        <button class="btn danger" onclick="clearAll()">Clear</button>
+      </div>
+
+      <div class="options" id="options" style="display:none">
+        <label>Rotation target:
+          <select id="rotateTarget">
+            <option value="all">All uploaded files</option>
+          </select>
+        </label>
+        <label>Split pages range (e.g. 1-3,5) (optional):
+          <input type="text" id="splitRange" placeholder="all pages" style="padding:.4rem;border:1px solid var(--border);border-radius:.4rem">
+        </label>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:.75rem;color:var(--primary)">How it works</h3>
+      <ul style="padding-left:1.25rem;color:var(--muted)">
+        <li>All processing happens locally in your browser &mdash; files are never uploaded.</li>
+        <li>Merge combines multiple PDFs in the order listed.</li>
+        <li>Split extracts every page (or a range) into a ZIP of single-page PDFs.</li>
+        <li>Rotate re-saves pages rotated 90&deg;.</li>
+        <li>Compress re-encodes the PDF with object streams for a smaller file.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 PDF Pro &mdash; 100% client-side. No data leaves your device. &nbsp;|&nbsp; Built with pdf-lib.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const actions = document.getElementById('actions');
+    const options = document.getElementById('options');
+    const fileList = document.getElementById('fileList');
+    const status = document.getElementById('status');
+    const progress = document.getElementById('progress');
+    const progressBar = document.getElementById('progressBar');
+
+    let files = []; // {name, bytes, pdfDoc, pageCount}
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+    function setStatus(msg, type) {
+      status.textContent = msg;
+      status.className = 'status show ' + (type || 'info');
+    }
+    function setProgress(pct) {
+      if (pct === null) { progress.classList.remove('show'); return; }
+      progress.classList.add('show'); progressBar.style.width = pct + '%';
+    }
+
+    async function handleFiles(list) {
+      const arr = Array.from(list).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      if (arr.length === 0) { setStatus('Please select PDF files.', 'err'); return; }
+      for (const f of arr) {
+        if (f.size > 25 * 1024 * 1024) { setStatus(f.name + ' exceeds 25 MB limit.', 'err'); continue; }
+        try {
+          const buf = await f.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          const pdfDoc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+          files.push({ name: f.name, bytes, pdfDoc, pageCount: pdfDoc.getPageCount() });
+        } catch (err) {
+          setStatus('Failed to read ' + f.name + ': ' + err.message, 'err');
+        }
+      }
+      renderList();
+      if (files.length > 0) {
+        actions.style.display = 'flex';
+        options.style.display = 'flex';
+        setStatus(files.length + ' PDF(s) loaded. Choose an action.', 'ok');
+      }
+    }
+
+    function renderList() {
+      fileList.innerHTML = files.map((f, i) => `
+        <div class="file-item">
+          <div>
+            <div class="name">${escapeHtml(f.name)}</div>
+            <div class="meta">${f.pageCount} page(s) &bull; ${(f.bytes.byteLength/1024).toFixed(1)} KB</div>
+          </div>
+          <button class="btn secondary" onclick="removeFile(${i})" style="padding:.3rem .7rem;font-size:.85rem">Remove</button>
+        </div>`).join('');
+      const sel = document.getElementById('rotateTarget');
+      sel.innerHTML = '<option value="all">All uploaded files</option>' + files.map((f,i) => `<option value="${i}">${escapeHtml(f.name)}</option>`).join('');
+    }
+
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function removeFile(i){ files.splice(i,1); renderList(); if(files.length===0){ actions.style.display='none'; options.style.display='none'; } }
+
+    function clearAll(){ files=[]; renderList(); actions.style.display='none'; options.style.display='none'; status.className='status'; setProgress(null); fileInput.value=''; }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function mergePDFs() {
+      if (files.length === 0) return;
+      try {
+        setProgress(10); setStatus('Merging PDFs...', 'info');
+        const merged = await PDFLib.PDFDocument.create();
+        let total = 0;
+        for (const f of files) total += f.pageCount;
+        let done = 0;
+        for (const f of files) {
+          const src = await PDFLib.PDFDocument.load(f.bytes);
+          const pages = await merged.copyPages(src, src.getPageIndices());
+          pages.forEach(p => merged.addPage(p));
+          done += f.pageCount;
+          setProgress(10 + (done/total)*80);
+        }
+        const out = await merged.save();
+        const blob = new Blob([out], { type: 'application/pdf' });
+        downloadBlob(blob, 'merged.pdf');
+        setProgress(100); setStatus('Merged PDF downloaded (' + files.length + ' files).', 'ok');
+        setTimeout(() => setProgress(null), 1500);
+      } catch (err) { setStatus('Merge failed: ' + err.message, 'err'); setProgress(null); }
+    }
+
+    function parseRange(str, max) {
+      str = (str || '').trim();
+      if (!str) return Array.from({length:max}, (_,i)=>i);
+      const set = new Set();
+      for (const part of str.split(',')) {
+        const p = part.trim();
+        if (!p) continue;
+        if (p.includes('-')) {
+          const [a,b] = p.split('-').map(x=>parseInt(x.trim(),10));
+          if (isNaN(a) || isNaN(b)) continue;
+          for (let i=Math.max(1,a); i<=Math.min(max,b); i++) set.add(i-1);
+        } else {
+          const n = parseInt(p,10);
+          if (!isNaN(n) && n>=1 && n<=max) set.add(n-1);
+        }
+      }
+      const arr = Array.from(set).sort((a,b)=>a-b);
+      return arr.length ? arr : Array.from({length:max}, (_,i)=>i);
+    }
+
+    async function splitPDFs() {
+      if (files.length === 0) return;
+      try {
+        setStatus('Splitting PDFs into pages...', 'info');
+        setProgress(5);
+        const zip = new JSZip();
+        let count = 0;
+        const total = files.reduce((a,f)=>a+f.pageCount,0);
+        for (const f of files) {
+          const src = await PDFLib.PDFDocument.load(f.bytes);
+          const indices = parseRange(document.getElementById('splitRange').value, f.pageCount);
+          for (const idx of indices) {
+            const doc = await PDFLib.PDFDocument.create();
+            const [page] = await doc.copyPages(src, [idx]);
+            doc.addPage(page);
+            const out = await doc.save();
+            const base = f.name.replace(/\.pdf$/i,'');
+            zip.file(`${base}_page_${idx+1}.pdf`, out);
+            count++;
+            setProgress(5 + (count/total)*90);
+          }
+        }
+        const blob = await zip.generateAsync({ type: 'blob' });
+        downloadBlob(blob, 'split_pages.zip');
+        setProgress(100); setStatus('Split complete: ' + count + ' page(s) zipped.', 'ok');
+        setTimeout(() => setProgress(null), 1500);
+      } catch (err) { setStatus('Split failed: ' + err.message, 'err'); setProgress(null); }
+    }
+
+    async function rotateAll(dir) {
+      if (files.length === 0) return;
+      const target = document.getElementById('rotateTarget').value;
+      const targets = target === 'all' ? files.map((_,i)=>i) : [parseInt(target,10)];
+      try {
+        setStatus('Rotating...', 'info'); setProgress(5);
+        const merged = await PDFLib.PDFDocument.create();
+        let total = 0;
+        for (const i of targets) total += files[i].pageCount;
+        let done = 0;
+        for (const i of targets) {
+          const f = files[i];
+          const src = await PDFLib.PDFDocument.load(f.bytes);
+          const pages = await merged.copyPages(src, src.getPageIndices());
+          pages.forEach((p, idx) => {
+            const rot = p.getRotation().angle;
+            const delta = dir === 'left' ? -90 : 90;
+            p.setRotation(PDFLib.degrees(rot + delta));
+            merged.addPage(p);
+          });
+          done += f.pageCount;
+          setProgress(5 + (done/total)*85);
+        }
+        const out = await merged.save();
+        const blob = new Blob([out], { type: 'application/pdf' });
+        downloadBlob(blob, 'rotated.pdf');
+        setProgress(100); setStatus('Rotated PDF downloaded.', 'ok');
+        setTimeout(() => setProgress(null), 1500);
+      } catch (err) { setStatus('Rotate failed: ' + err.message, 'err'); setProgress(null); }
+    }
+
+    async function compressPDFs() {
+      if (files.length === 0) return;
+      try {
+        setStatus('Compressing...', 'info'); setProgress(5);
+        const zip = new JSZip();
+        let total = files.length, done = 0;
+        for (const f of files) {
+          const src = await PDFLib.PDFDocument.load(f.bytes);
+          const out = await src.save({ useObjectStreams: true, addDefaultPage: false });
+          const base = f.name.replace(/\.pdf$/i,'');
+          zip.file(base + '_compressed.pdf', out);
+          done++;
+          setProgress(5 + (done/total)*90);
+        }
+        const blob = await zip.generateAsync({ type: 'blob' });
+        downloadBlob(blob, 'compressed_pdfs.zip');
+        setProgress(100); setStatus('Compressed PDFs downloaded.', 'ok');
+        setTimeout(() => setProgress(null), 1500);
+      } catch (err) { setStatus('Compress failed: ' + err.message, 'err'); setProgress(null); }
+    }
+  </script>
+</body>
+</html>
