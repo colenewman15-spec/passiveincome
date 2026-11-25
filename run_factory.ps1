@@ -44,7 +44,12 @@ try {
   node (Join-Path $root "factory\generate_article.mjs") $ArticleTopic
   if ($LASTEXITCODE -ne 0) { Write-Host "Article generation failed (non-fatal)" }
 
-  # 4. Package
+  # 4. Build site (render markdown guides to HTML)
+  Write-Host "`n--- Building site ---"
+  node (Join-Path $root "factory\build_site.mjs")
+  if ($LASTEXITCODE -ne 0) { Write-Host "Site build failed (non-fatal)" }
+
+  # 5. Package
   Write-Host "`n--- Packaging products ---"
   python (Join-Path $root "factory\package.py")
   if ($LASTEXITCODE -ne 0) { throw "Packaging failed" }

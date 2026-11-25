@@ -1,5 +1,4 @@
-# Deploy to GitHub Pages (requires remote configured + auth)
-# One-time: create a GitHub repo (anonymous account) and: git remote add origin <url>
+# Deploy the static site to GitHub Pages (requires remote configured + auth)
 param([string]$Branch = "main")
 
 $root = $PSScriptRoot
@@ -12,10 +11,13 @@ if (-not $remote) {
   exit 1
 }
 
-# Ensure products/dist are built
-if (Test-Path "dist") {
-  Copy-Item "dist\*.zip" "site\products\" -Force -ErrorAction SilentlyContinue
-}
+# Rebuild the site (render guides to HTML) before deploying
+Write-Host "Building site..."
+node (Join-Path $root "factory\build_site.mjs")
+
+# Ensure the root index and .nojekyll exist
+if (-not (Test-Path "index.html")) { Write-Host "WARNING: root index.html missing" }
+if (-not (Test-Path ".nojekyll")) { New-Item -ItemType File -Path ".nojekyll" | Out-Null }
 
 git add -A
 $changes = git status --porcelain
@@ -23,4 +25,5 @@ if ($changes) {
   git commit -m "Update $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 }
 git push origin $Branch
-Write-Host "Deployed. Enable GitHub Pages in repo settings -> Pages -> Source: $Branch / (root or /site)."
+Write-Host "Deployed. If using GitHub Pages: Settings -> Pages -> Source: $Branch / (root)."
+Write-Host "For Netlify: publish directory is configured in netlify.toml (site)."
