@@ -1,10 +1,5 @@
 [
   {
-    "slug": "crm-software",
-    "title": "Best CRM software in 2026",
-    "category": "CRM software"
-  },
-  {
     "slug": "email-marketing-software",
     "title": "Best email marketing software in 2026",
     "category": "email marketing software"
@@ -13,11 +8,6 @@
     "slug": "accounting-software",
     "title": "Best accounting software in 2026",
     "category": "accounting software"
-  },
-  {
-    "slug": "hr-software",
-    "title": "Best HR software in 2026",
-    "category": "HR software"
   },
   {
     "slug": "customer-support-software",
@@ -43,5 +33,15 @@
     "slug": "project-management-software",
     "title": "Best project management software in 2026",
     "category": "project management software"
+  },
+  {
+    "slug": "crm-software",
+    "title": "Best CRM software in 2026",
+    "category": "CRM software"
+  },
+  {
+    "slug": "hr-software",
+    "title": "Best HR software in 2026",
+    "category": "HR software"
   }
 ]

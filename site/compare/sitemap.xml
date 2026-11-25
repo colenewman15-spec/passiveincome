@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://stackcompare.example/</loc></url>
-  <url><loc>https://stackcompare.example/pages/crm-software.html</loc></url>
   <url><loc>https://stackcompare.example/pages/email-marketing-software.html</loc></url>
   <url><loc>https://stackcompare.example/pages/accounting-software.html</loc></url>
-  <url><loc>https://stackcompare.example/pages/hr-software.html</loc></url>
   <url><loc>https://stackcompare.example/pages/customer-support-software.html</loc></url>
   <url><loc>https://stackcompare.example/pages/password-managers.html</loc></url>
   <url><loc>https://stackcompare.example/pages/vpn-services.html</loc></url>
   <url><loc>https://stackcompare.example/pages/website-builders.html</loc></url>
   <url><loc>https://stackcompare.example/pages/project-management-software.html</loc></url>
+  <url><loc>https://stackcompare.example/pages/crm-software.html</loc></url>
+  <url><loc>https://stackcompare.example/pages/hr-software.html</loc></url>
 </urlset>
